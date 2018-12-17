@@ -21,6 +21,7 @@ static GdkPixbuf	*last_load_image_pixbuf;
 static GtkWidget	*window;
 static GtkWidget	*image;
 static GtkWidget	*entry_image_filename;
+static GtkWidget	*scale_resize;
 
 int main(int argc, char *argv[])
 {
@@ -28,6 +29,7 @@ int main(int argc, char *argv[])
 	GtkWidget		*hbox;
 	GtkWidget		*frame_image;
 	GtkWidget		*button_load_image;
+	GtkWidget		*label_resize;
 	GtkWidget		*button_change_image;
 
 	gtk_init(&argc, &argv);
@@ -41,6 +43,10 @@ int main(int argc, char *argv[])
 	image = gtk_image_new();
 	button_load_image = gtk_button_new_with_label("Загрузить картинку");
 	entry_image_filename = gtk_entry_new();
+	label_resize = gtk_label_new("Масштаб: (%)");
+	scale_resize = gtk_scale_new_with_range(
+		GTK_ORIENTATION_HORIZONTAL, 10, 190, 1);
+	gtk_range_set_value(GTK_RANGE(scale_resize), 100);
 	button_change_image = gtk_button_new_with_label("Изменить картинку");
 
 	gtk_widget_set_valign(button_change_image, GTK_ALIGN_END);
@@ -52,6 +58,8 @@ int main(int argc, char *argv[])
 	gtk_container_add(GTK_CONTAINER(frame_image), image);
 	gtk_box_pack_start(GTK_BOX(vbox), button_load_image, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), entry_image_filename, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), label_resize, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), scale_resize, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), button_change_image, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), frame_image, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 0);
