@@ -118,22 +118,45 @@ static void change_image(void)
 	struct ch_color	result_color;
 	GdkPixbuf		*image_pixbuf;
 	GdkPixbuf		*result_pixbuf;
+	double			resize_coeff;
+	double			width_resize_coeff;
+	double			height_resize_coeff;
 	int				row;
 	int				col;
-	int				width;
-	int				height;
+	int				row0;
+	int				col0;
+	int				old_width;
+	int				old_height;
+	int				new_width;
+	int				new_height;
 
 	image_pixbuf = last_load_image_pixbuf;
-	result_pixbuf = gdk_pixbuf_copy(image_pixbuf);
-	width = gdk_pixbuf_get_width(image_pixbuf);
-	height = gdk_pixbuf_get_height(image_pixbuf);
-	for (row = 0; row < height; row++)
-		for (col = 0; col < width; col++)
+	resize_coeff = gtk_range_get_value(GTK_RANGE(scale_resize)) / 100.0;
+	old_width = gdk_pixbuf_get_width(image_pixbuf);
+	old_height = gdk_pixbuf_get_height(image_pixbuf);
+	new_width = old_width * resize_coeff;
+	new_height = old_height * resize_coeff;
+	width_resize_coeff = (old_width - 1.0) / (new_width - 1.0);
+	height_resize_coeff = (old_height - 1.0) / (new_height - 1.0);
+
+	result_pixbuf = gdk_pixbuf_new(
+				GDK_COLORSPACE_RGB,
+                gdk_pixbuf_get_has_alpha(image_pixbuf),
+                gdk_pixbuf_get_bits_per_sample(image_pixbuf),
+                new_width,
+                new_height);
+
+	for (row = 0; row < new_height; row++)
+	{
+		row0 = row * height_resize_coeff;
+		for (col = 0; col < new_width; col++)
 		{
-			get_pixel(image_pixbuf, col, row, &image_color);
+			col0 = col * width_resize_coeff;
+			get_pixel(image_pixbuf, col0, row0, &image_color);
 			result_color = image_color;
 			set_pixel(result_pixbuf, col, row, &result_color);
 		}
+	}
 	gtk_image_set_from_pixbuf(GTK_IMAGE(image), result_pixbuf);
 	g_object_unref(result_pixbuf);
 }
