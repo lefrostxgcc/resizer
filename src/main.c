@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	entry_image_filename = gtk_entry_new();
 	label_resize = gtk_label_new("Масштаб: (%)");
 	scale_resize = gtk_scale_new_with_range(
-		GTK_ORIENTATION_HORIZONTAL, 10, 190, 1);
+		GTK_ORIENTATION_HORIZONTAL, 10, 20000, 1);
 	gtk_range_set_value(GTK_RANGE(scale_resize), 100);
 	label_algorithm = gtk_label_new("Алгоритм:");
 	button_change_image = gtk_button_new_with_label("Изменить картинку");
