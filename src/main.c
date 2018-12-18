@@ -13,7 +13,7 @@ struct ch_color
 static void on_button_load_image_clicked(GtkWidget *button, gpointer data);
 static void on_button_change_image_clicked(GtkWidget *button, gpointer data);
 static void load_image(const gchar *filename);
-static void change_image(void);
+static void resize_nearest(void);
 static void get_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color);
 static void set_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color);
 
@@ -136,7 +136,7 @@ static void on_button_load_image_clicked(GtkWidget *button, gpointer data)
 
 static void on_button_change_image_clicked(GtkWidget *button, gpointer data)
 {
-	change_image();
+	resize_nearest();
 }
 
 static void load_image(const gchar *filename)
@@ -149,7 +149,7 @@ static void load_image(const gchar *filename)
 		gtk_image_get_pixbuf(GTK_IMAGE(image)));
 }
 
-static void change_image(void)
+static void resize_nearest(void)
 {
 	struct ch_color	image_color;
 	struct ch_color	result_color;
