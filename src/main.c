@@ -1,13 +1,14 @@
 #include <gtk/gtk.h>
+#include <math.h>
 
 #define	SPACING	5
 
 struct ch_color
 {
-	guchar red;
-	guchar green;
-	guchar blue;
-	guchar alpha;
+	guchar r;
+	guchar g;
+	guchar b;
+	guchar a;
 };
 
 static void on_button_load_image_clicked(GtkWidget *button, gpointer data);
@@ -15,6 +16,10 @@ static void on_button_change_image_clicked(GtkWidget *button, gpointer data);
 static void load_image(const gchar *filename);
 static void resize_nearest(void);
 static void resize_bilinear(void);
+static void bilinear(GdkPixbuf *pixbuf, double x, double y, int x1, int y1,
+	struct ch_color *result);
+static int bilinear_color(double x, double y, int x1, int y1,
+	int Q11, int Q12, int Q21, int Q22);
 static void get_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color);
 static void set_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color);
 
@@ -204,6 +209,101 @@ static void resize_nearest(void)
 
 static void resize_bilinear(void)
 {
+	struct ch_color	result_color;
+	GdkPixbuf		*image_pixbuf;
+	GdkPixbuf		*result_pixbuf;
+	double			resize_coeff;
+	double			width_resize_coeff;
+	double			height_resize_coeff;
+	double			x;
+	double			y;
+	int				new_y;
+	int				new_x;
+	int				x1;
+	int				y1;
+	int				old_width;
+	int				old_height;
+	int				new_width;
+	int				new_height;
+
+	image_pixbuf = last_load_image_pixbuf;
+	resize_coeff = gtk_range_get_value(GTK_RANGE(scale_resize)) / 100.0;
+	old_width = gdk_pixbuf_get_width(image_pixbuf);
+	old_height = gdk_pixbuf_get_height(image_pixbuf);
+	new_width = old_width * resize_coeff;
+	new_height = old_height * resize_coeff;
+	width_resize_coeff = (old_width - 1.0) / (new_width - 1.0);
+	height_resize_coeff = (old_height - 1.0) / (new_height - 1.0);
+
+	result_pixbuf = gdk_pixbuf_new(
+				GDK_COLORSPACE_RGB,
+                gdk_pixbuf_get_has_alpha(image_pixbuf),
+                gdk_pixbuf_get_bits_per_sample(image_pixbuf),
+                new_width,
+                new_height);
+
+	for (new_y = 0; new_y < new_height; new_y++)
+	{
+		y = new_y * height_resize_coeff;
+		y1 = floor(y);
+		if (y1 > old_height - 2)
+			y1 = old_height - 2;
+		for (new_x = 0; new_x < new_width; new_x++)
+		{
+			x = new_x * width_resize_coeff;
+			x1 = floor(x);
+			if (x1 > old_width - 2)
+				x1 = old_width - 2;
+			bilinear(image_pixbuf, x, y, x1, y1, &result_color);
+			set_pixel(result_pixbuf, new_x, new_y, &result_color);
+		}
+	}
+	gtk_image_set_from_pixbuf(GTK_IMAGE(image), result_pixbuf);
+	g_object_unref(result_pixbuf);
+}
+
+static void bilinear(GdkPixbuf *pixbuf, double x, double y, int x1, int y1,
+	struct ch_color *result)
+{
+	struct ch_color	Q11;
+	struct ch_color	Q12;
+	struct ch_color	Q21;
+	struct ch_color	Q22;
+	int				x2;
+	int				y2;
+
+	x2 = x1 + 1;
+	y2 = y1 + 1;
+	get_pixel(pixbuf, x1, y1, &Q11);
+	get_pixel(pixbuf, x1, y2, &Q12);
+	get_pixel(pixbuf, x2, y1, &Q21);
+	get_pixel(pixbuf, x2, y2, &Q22);
+
+	result->r = bilinear_color(x, y, x1, y1, Q11.r, Q12.r, Q21.r, Q22.r);
+	result->g = bilinear_color(x, y, x1, y1, Q11.g, Q12.g, Q21.g, Q22.g);
+	result->b = bilinear_color(x, y, x1, y1, Q11.b, Q12.b, Q21.b, Q22.b);
+	result->a = bilinear_color(x, y, x1, y1, Q11.a, Q12.a, Q21.a, Q22.a);
+}
+
+static int bilinear_color(double x, double y, int x1, int y1,
+	int Q11, int Q12, int Q21, int Q22)
+{
+	int		R1;
+	int		R2;
+	int		P;
+	int		x2;
+	int		y2;
+
+	x2 = x1 + 1;
+	y2 = y1 + 1;
+	R1 = (x2 - x) * Q11 + (x - x1) * Q21;
+	R2 = (x2 - x) * Q12 + (x - x1) * Q22;
+	P = (y2 - y) * R1 + (y - y1) * R2;
+	if (P < 0)
+		P = 0;
+	else if (P > 255)
+		P = 255;
+	return P;
 }
 
 static void get_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color)
@@ -226,11 +326,11 @@ static void get_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color)
 	pixels = gdk_pixbuf_get_pixels(pixbuf);
 
 	p = pixels + y * rowstride + x * n_channels;
-	color->red		= p[0];
-	color->green	= p[1];
-	color->blue 	= p[2];
+	color->r		= p[0];
+	color->g	= p[1];
+	color->b 	= p[2];
 	if (gdk_pixbuf_get_has_alpha(pixbuf))
-		color->alpha = p[3];
+		color->a = p[3];
 }
 
 static void set_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color)
@@ -253,9 +353,9 @@ static void set_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color)
 	pixels = gdk_pixbuf_get_pixels(pixbuf);
 
 	p = pixels + y * rowstride + x * n_channels;
-	p[0] = color->red;
-	p[1] = color->green;
-	p[2] = color->blue;
+	p[0] = color->r;
+	p[1] = color->g;
+	p[2] = color->b;
 	if (gdk_pixbuf_get_has_alpha(pixbuf))
-		p[3] = color->alpha;
+		p[3] = color->a;
 }
