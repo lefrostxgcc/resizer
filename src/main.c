@@ -22,6 +22,16 @@ static GtkWidget	*window;
 static GtkWidget	*image;
 static GtkWidget	*entry_image_filename;
 static GtkWidget	*scale_resize;
+static GtkWidget	*combo_box_resize;
+
+static char *resize_names[] =
+{
+	"Метод ближайшего соседа",
+	"Билинейная интерполяция"
+};
+
+static const int resize_names_size =
+	sizeof resize_names / sizeof resize_names[0];
 
 int main(int argc, char *argv[])
 {
@@ -30,7 +40,11 @@ int main(int argc, char *argv[])
 	GtkWidget		*frame_image;
 	GtkWidget		*button_load_image;
 	GtkWidget		*label_resize;
+	GtkWidget		*label_algorithm;
 	GtkWidget		*button_change_image;
+	GtkListStore	*store_resize;
+	GtkCellRenderer	*render;
+	GtkTreeIter		iter;
 
 	gtk_init(&argc, &argv);
 
@@ -47,9 +61,30 @@ int main(int argc, char *argv[])
 	scale_resize = gtk_scale_new_with_range(
 		GTK_ORIENTATION_HORIZONTAL, 10, 190, 1);
 	gtk_range_set_value(GTK_RANGE(scale_resize), 100);
+	label_algorithm = gtk_label_new("Алгоритм:");
 	button_change_image = gtk_button_new_with_label("Изменить картинку");
 
 	gtk_widget_set_valign(button_change_image, GTK_ALIGN_END);
+
+	store_resize = gtk_list_store_new(1, G_TYPE_STRING);
+	for (int i = 0; i < resize_names_size; i++)
+	{
+		gtk_list_store_append(store_resize, &iter);
+		gtk_list_store_set(store_resize, &iter, 0, resize_names[i], -1);
+	}
+
+	combo_box_resize =
+		gtk_combo_box_new_with_model(GTK_TREE_MODEL(store_resize));
+	g_object_unref(store_resize);
+
+	render = gtk_cell_renderer_text_new();
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo_box_resize),
+		render, TRUE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo_box_resize),
+		render,
+		"text", 0,
+		NULL);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo_box_resize), 0);
 
 	load_image("/home/chip/Pictures/beach.png");
 
@@ -60,6 +95,8 @@ int main(int argc, char *argv[])
 	gtk_box_pack_start(GTK_BOX(vbox), entry_image_filename, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), label_resize, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), scale_resize, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), label_algorithm, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), combo_box_resize, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), button_change_image, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), frame_image, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 0);
