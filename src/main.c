@@ -239,8 +239,8 @@ static void resize_bilinear(void)
 	old_height = gdk_pixbuf_get_height(image_pixbuf);
 	new_width = old_width * resize_coeff;
 	new_height = old_height * resize_coeff;
-	width_resize_coeff = (old_width - 1.0) / (new_width - 1.0);
-	height_resize_coeff = (old_height - 1.0) / (new_height - 1.0);
+	width_resize_coeff = (double)(old_width - 1) / (new_width - 1);
+	height_resize_coeff = (double)(old_height - 1) / (new_height - 1);
 
 	result_pixbuf = gdk_pixbuf_new(
 				GDK_COLORSPACE_RGB,
