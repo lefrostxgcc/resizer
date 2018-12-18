@@ -167,6 +167,8 @@ static void resize_nearest(void)
 	double			resize_coeff;
 	double			width_resize_coeff;
 	double			height_resize_coeff;
+	double			row0f;
+	double			col0f;
 	int				row;
 	int				col;
 	int				row0;
@@ -182,9 +184,8 @@ static void resize_nearest(void)
 	old_height = gdk_pixbuf_get_height(image_pixbuf);
 	new_width = old_width * resize_coeff;
 	new_height = old_height * resize_coeff;
-	width_resize_coeff = (old_width - 1.0) / (new_width - 1.0);
-	height_resize_coeff = (old_height - 1.0) / (new_height - 1.0);
-
+	width_resize_coeff = (double)(old_width - 1) / (new_width - 1);
+	height_resize_coeff = (double)(old_height - 1) / (new_height - 1);
 	result_pixbuf = gdk_pixbuf_new(
 				GDK_COLORSPACE_RGB,
                 gdk_pixbuf_get_has_alpha(image_pixbuf),
@@ -194,10 +195,16 @@ static void resize_nearest(void)
 
 	for (row = 0; row < new_height; row++)
 	{
-		row0 = row * height_resize_coeff;
+		row0f = row * height_resize_coeff;
+		row0 = row0f;
+		if (row0f - row0 > 0.5)
+			row0++;
 		for (col = 0; col < new_width; col++)
 		{
-			col0 = col * width_resize_coeff;
+			col0f = col * width_resize_coeff;
+			col0 = col0f;
+			if (col0f - col0 > 0.5)
+				col0++;
 			get_pixel(image_pixbuf, col0, row0, &image_color);
 			result_color = image_color;
 			set_pixel(result_pixbuf, col, row, &result_color);
