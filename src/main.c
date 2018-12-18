@@ -14,6 +14,7 @@ static void on_button_load_image_clicked(GtkWidget *button, gpointer data);
 static void on_button_change_image_clicked(GtkWidget *button, gpointer data);
 static void load_image(const gchar *filename);
 static void resize_nearest(void);
+static void resize_bilinear(void);
 static void get_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color);
 static void set_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color);
 
@@ -136,7 +137,10 @@ static void on_button_load_image_clicked(GtkWidget *button, gpointer data)
 
 static void on_button_change_image_clicked(GtkWidget *button, gpointer data)
 {
-	resize_nearest();
+	if (gtk_combo_box_get_active(GTK_COMBO_BOX(combo_box_resize)) == 0)
+		resize_nearest();
+	else if (gtk_combo_box_get_active(GTK_COMBO_BOX(combo_box_resize)) == 1)
+		resize_bilinear();
 }
 
 static void load_image(const gchar *filename)
@@ -196,6 +200,10 @@ static void resize_nearest(void)
 	}
 	gtk_image_set_from_pixbuf(GTK_IMAGE(image), result_pixbuf);
 	g_object_unref(result_pixbuf);
+}
+
+static void resize_bilinear(void)
+{
 }
 
 static void get_pixel(GdkPixbuf *pixbuf, int x, int y, struct ch_color *color)
